@@ -28,7 +28,17 @@ start_link() ->
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+    Restart = permanent,
+    Shutdown = 2000,
+
+    ChatServer = {chat_server, {chat_server, start_link, []},
+        Restart, Shutdown, worker, [chat_server]},
+
+
+    UserSup = {user_sup, {user_sup, start_link, []},
+        Restart, Shutdown, supervisor, [user_sup]},
+
+    {ok, { {one_for_all, 0, 1}, [ChatServer, UserSup]} }.
 
 %%====================================================================
 %% Internal functions
