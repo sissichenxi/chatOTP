@@ -68,7 +68,7 @@ init([]) ->
   Shutdown = 2000,
   Type = worker,
 
-  UserServer = {user_server, {user_server, start_link, []},
+  UserServer = {undefined, {user_server, start_link, []},
     Restart, Shutdown, Type, [user_server]},
 
   {ok, {SupFlags, [UserServer]}}.
