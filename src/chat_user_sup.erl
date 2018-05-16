@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 07. 五月 2018 下午3:29
 %%%-------------------------------------------------------------------
--module(user_sup).
+-module(chat_user_sup).
 -author("chenxi1").
 
 -behaviour(supervisor).
@@ -68,8 +68,8 @@ init([]) ->
   Shutdown = 2000,
   Type = worker,
 
-  UserServer = {undefined, {user_server, start_link, []},
-    Restart, Shutdown, Type, [user_server]},
+  UserServer = {undefined, {chat_user_server, start_link, []},
+    Restart, Shutdown, Type, [chat_user_server]},
 
   {ok, {SupFlags, [UserServer]}}.
 

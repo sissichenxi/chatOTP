@@ -35,8 +35,8 @@ init([]) ->
         Restart, Shutdown, worker, [chat_server]},
 
 
-    UserSup = {user_sup, {user_sup, start_link, []},
-        Restart, Shutdown, supervisor, [user_sup]},
+    UserSup = {chat_user_sup, {chat_user_sup, start_link, []},
+        Restart, Shutdown, supervisor, [chat_user_sup]},
 
     {ok, { {one_for_all, 0, 1}, [ChatServer, UserSup]} }.
 

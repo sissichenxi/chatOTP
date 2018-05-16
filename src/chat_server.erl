@@ -159,7 +159,7 @@ start_server() ->
 
 handle_connect(Listen) ->
   {ok,Socket} = gen_tcp:accept(Listen),
-  {ok, Pid}=user_sup:start_child(user_sup, [Socket]),
+  {ok, Pid}=chat_user_sup:start_child([Socket]),
   ok=gen_tcp:controlling_process(Socket,Pid).
 
 loopid(RoomId)->
