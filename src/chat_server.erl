@@ -158,9 +158,13 @@ start_server() ->
   register(idgen,Pid).
 
 handle_connect(Listen) ->
+  io:format("entering handle conect ~n"),
   {ok,Socket} = gen_tcp:accept(Listen),
+  io:format("received conn on port ~p~n",[Socket]),
   {ok, Pid}=chat_user_sup:start_child([Socket]),
-  ok=gen_tcp:controlling_process(Socket,Pid).
+  io:format("~p ~p~n", [?MODULE, ?LINE]),
+  ok=gen_tcp:controlling_process(Socket,Pid),
+  handle_connect(Listen).
 
 loopid(RoomId)->
   receive

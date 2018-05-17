@@ -64,11 +64,11 @@ init([]) ->
 
   SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
-  Restart = permanent,
+  Restart = temporary,
   Shutdown = 2000,
   Type = worker,
 
-  UserServer = {undefined, {chat_user_server, start_link, []},
+  UserServer = {chat_user_server, {chat_user_server,start_link,[]},
     Restart, Shutdown, Type, [chat_user_server]},
 
   {ok, {SupFlags, [UserServer]}}.

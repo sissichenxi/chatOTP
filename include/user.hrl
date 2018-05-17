@@ -1,4 +1,4 @@
 -record(users,
-{id}).
+{id,socket}).
 -record(rooms,
 {rmid,rmmems=[],rmname}).
