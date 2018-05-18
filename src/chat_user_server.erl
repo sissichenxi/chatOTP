@@ -84,6 +84,9 @@ init([Socket]) ->
   {stop, Reason :: term(), Reply :: term(), NewState :: #state{}} |
   {stop, Reason :: term(), NewState :: #state{}}).
 
+handle_call(stop, From, State) ->
+%%  If {stop,Reason,Reply,NewState} is returned, Reply is given back to From
+  {stop, {shutdown,From}, State};
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
@@ -98,8 +101,9 @@ handle_call(_Request, _From, State) ->
   {noreply, NewState :: #state{}} |
   {noreply, NewState :: #state{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #state{}}).
+handle_cast(stop, State) ->
+  {stop, shutdown,State};
 handle_cast(_Request, State) ->
-
   {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -130,9 +134,9 @@ handle_info({tcp, _, Data}, State=#state{socket = Socket})->
                0004 ->
                  do_joinrm(Str,State);
                0005 ->
-                 do_chatrm(Str,State);
-               0002->
-                 do_logout(Str,State)
+                 do_chatrm(Str,State)
+%%               0002->
+%%                 do_logout(Str,State)
   end,
   {noreply, NewState};
 
@@ -140,6 +144,7 @@ handle_info({tcp_closed,_Socket}, State) ->
   io:format("Server socket closed~n"),
   Id = State#state.id,
   true = ets:delete(onlineusers, Id),
+  ok = gen_server:cast(self(),stop),
   {noreply, State};
 
 handle_info({privchat, Srcid, Msg}, State) ->
@@ -179,6 +184,12 @@ handle_info(_Info, State) ->
 -spec(terminate(Reason :: (normal | shutdown | {shutdown, term()} | term()),
     State :: #state{}) -> term()).
 
+terminate({shutdown,From}, State) ->
+%%  do some clean up here
+  Sokect=State#state.socket,
+  ok = gen_tcp:close(Sokect),
+  gen_server:reply(From,ok),
+  io:format("~p proc is going to terminate ~n",[self()]);
 terminate(_Reason, _State) ->
   ok.
 
@@ -211,14 +222,16 @@ do_login(Str,State)->
     [Record] ->
       PrevSocket = Record#users.socket,
       io:format("the previous socket is ~p~n",[PrevSocket]),
-      ok = gen_tcp:close(PrevSocket),
-      ok = supervisor:terminate_child(chat_user_sup,whereis(IdAtom)),
-      true = ets:delete(onlineusers, LId),
-      true = ets:insert(onlineusers, NewUser);
-    [] ->
-      true = ets:insert(onlineusers, NewUser)
+      Pid = whereis(IdAtom),
+      true = unregister(IdAtom),
+      ok = gen_server:call(Pid,stop),
+      io:format("~p ~p~n", [?MODULE, ?LINE]),
+      true = ets:delete(onlineusers, LId);
+    []->
+      ok
   end,
-  register(IdAtom, self()),
+  true = ets:insert(onlineusers, NewUser),
+  true = register(IdAtom, self()),
   State#state{id=LId}.
 
 do_chat(Str,State)->
@@ -280,6 +293,7 @@ do_logout(_Str,State)->
   io:format("received logout msg~n"),
   Id=State#state.id,
   true = ets:delete(onlineusers, Id),
+  ok = gen_server:call(self(),stop),
   State.
 
 sendMsg([], _Packet) ->
